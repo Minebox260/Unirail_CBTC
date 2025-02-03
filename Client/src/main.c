@@ -14,6 +14,7 @@
 #include "marvelmind.h"
 #include "comm.h"
 #include "main.h"
+#include "utils.h"
 
 typedef struct {
     struct MarvelmindHedge * hedge;
@@ -42,7 +43,7 @@ int main (int argc, char *argv[]) {
     // Initialising Marvelmind
     const char * ttyFileName = MARVELMIND_DEFAULT_TTY;
     struct MarvelmindHedge * hedge=createMarvelmindHedge ();
-    struct FusionIMUValue fusionIMU;
+    struct RawIMUValue rawIMU;
     if (hedge==NULL)
     {
         puts ("Error: Unable to create MarvelmindHedge");
@@ -83,6 +84,7 @@ void * positionReport(void * positionReportArgs) {
     struct MarvelmindHedge * hedge = args->hedge;
     struct sockaddr_in * supervisor_adr = args->supervisor_adr;
     int sd = args->sd;
+    double accNorm;
 
     char acc[20];
 
@@ -92,7 +94,7 @@ void * positionReport(void * positionReportArgs) {
     message.data[0] = acc;
 
 	sem = sem_open(DATA_INPUT_SEMAPHORE, O_CREAT, 0777, 0);
-    struct FusionIMUValue fusionIMU;
+    struct RawIMUValue rawIMU;
     while ((!terminateProgram) && (!hedge->terminationRequired)) {
 
         if (clock_gettime(CLOCK_REALTIME, &ts) == -1)
@@ -103,9 +105,12 @@ void * positionReport(void * positionReportArgs) {
 		ts.tv_sec += 2;
 		sem_timedwait(sem,&ts);
 
-        getFusionIMUFromMarvelmindHedge(hedge, &fusionIMU);
-        //printf("Position: ax=%d, ay=%d, az=%d\n", fusionIMU.ax, fusionIMU.ay, fusionIMU.az);
-        sprintf(acc, "%f", sqrt(fusionIMU.ax^2 + fusionIMU.ay^2 + fusionIMU.az^2));
+        getRawIMUFromMarvelmindHedge(hedge, &rawIMU);
+
+        accNorm = calculateAccNnorm(rawIMU.acc_x, rawIMU.acc_y, rawIMU.acc_z);
+        
+        sprintf(acc, "%f", accNorm);
+        printf("Sent %f\n", accNorm);
         send_data(sd, supervisor_adr, message);
     }
     pthread_exit(NULL);

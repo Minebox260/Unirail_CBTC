@@ -1,7 +1,7 @@
 all: client supervisor
 
-CLIENT_SSH_IP1 = 192.168.1.172
-CLIENT_SSH_IP2 = 192.168.1.173
+CLIENT_SSH_IP1 = 192.168.1.173
+CLIENT_SSH_IP2 = 192.168.1.172
 
 CLIENT_SSH_USER = pi
 CLIENT_SSH_PASS = raspberry
@@ -19,4 +19,3 @@ clean:
 
 install:
 	sshpass -p $(CLIENT_SSH_PASS) scp -r ./Client/* $(CLIENT_SSH_USER)@$(CLIENT_SSH_IP1):$(CLIENT_SSH_PATH)
-	sshpass -p $(CLIENT_SSH_PASS) scp -r ./Client/* $(CLIENT_SSH_USER)@$(CLIENT_SSH_IP2):$(CLIENT_SSH_PATH)
